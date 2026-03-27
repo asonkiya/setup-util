@@ -20,7 +20,7 @@ The result is a composable, conflict-free project scaffold every time.
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/setup-util.git
+git clone https://github.com/asonkiya/setup-util.git
 cd setup-util/setup-cli
 python -m venv .venv
 source .venv/bin/activate
@@ -105,10 +105,10 @@ my_app/
 - [x] Core planner with dependency validation
 - [x] 6 template packs (base, fastapi, sqlalchemy, postgres, alembic, angular stub)
 - [x] Rich terminal output
-- [ ] TOML/ENV merge/patch utilities
-- [ ] Docker overlay templates
+- [x] TOML deep-merge and `.env` append via patch file convention
+- [x] 45-test pytest suite
+- [ ] Docker overlay as a standalone pack
 - [ ] `--dry-run` and `--fast` modes
-- [ ] Test suite (pytest, golden-path smoke tests)
 - [ ] Presets (`--preset fullstack-angular`, etc.)
 - [ ] `.setup-cli.lock` for template versioning
 
