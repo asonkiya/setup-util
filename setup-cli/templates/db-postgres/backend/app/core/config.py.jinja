@@ -1,0 +1,10 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def _default_db_url() -> str:
+    port = os.getenv("POSTGRES_PORT", "5432")
+    return f"postgresql+psycopg://postgres:postgres@localhost:{port}/{{ project_name }}"
+
+DATABASE_URL = os.getenv("DATABASE_URL", _default_db_url())
