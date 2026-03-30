@@ -9,6 +9,7 @@ except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
 import tomli_w
+from ruamel.yaml import YAML as _YAML
 
 
 def _merge_toml_dicts(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
@@ -84,11 +85,38 @@ def merge_env_files(base_path: Path, patch_path: Path) -> None:
     patch_path.unlink()
 
 
+def merge_yaml_files(base_path: Path, patch_path: Path) -> None:
+    if not base_path.exists():
+        patch_path.unlink()
+        return
+
+    yaml = _YAML()
+    yaml.preserve_quotes = True
+
+    with open(base_path) as f:
+        base = yaml.load(f) or {}
+
+    with open(patch_path) as f:
+        patch = yaml.load(f) or {}
+
+    merged = _merge_toml_dicts(dict(base), dict(patch))
+
+    with open(base_path, "w") as f:
+        yaml.dump(merged, f)
+
+    patch_path.unlink()
+
+
 def apply_patches(dest: Path) -> None:
     for patch_file in sorted(dest.rglob("*.patch.toml")):
         target_name = patch_file.name.replace(".patch.toml", ".toml")
         target = patch_file.parent / target_name
         merge_toml_files(target, patch_file)
+
+    for patch_file in sorted(dest.rglob("*.patch.yml")):
+        target_name = patch_file.name.replace(".patch.yml", ".yml")
+        target = patch_file.parent / target_name
+        merge_yaml_files(target, patch_file)
 
     for patch_file in sorted(dest.rglob("*.patch")):
         target_name = patch_file.name[: -len(".patch")]

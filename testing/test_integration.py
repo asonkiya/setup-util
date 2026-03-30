@@ -60,16 +60,33 @@ def test_apply_fastapi_sqlalchemy(tmp_dest: Path):
 
 def test_apply_fastapi_postgres(tmp_dest: Path):
     _plan(Flags(fastapi=True, postgres=True), tmp_dest)
-    assert (tmp_dest / "docker-compose.yml").exists()
+    # no --docker, so compose file should NOT be created
+    assert not (tmp_dest / "docker-compose.yml").exists()
     assert (tmp_dest / "backend" / ".env.example").exists()
     assert (tmp_dest / "backend" / "app" / "core" / "config.py").exists()
-    compose = (tmp_dest / "docker-compose.yml").read_text()
-    assert "myproject_pgdata" in compose
-    assert "myproject" in compose
     env = (tmp_dest / "backend" / ".env.example").read_text()
     assert "DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/myproject" in env
     data = tomllib.loads((tmp_dest / "backend" / "pyproject.toml").read_text())
     assert "psycopg[binary]>=3.1" in data["project"]["dependencies"]
+
+
+def test_apply_docker_only(tmp_dest: Path):
+    _plan(Flags(docker=True), tmp_dest)
+    assert (tmp_dest / "docker-compose.yml").exists()
+    assert (tmp_dest / ".dockerignore").exists()
+    compose = (tmp_dest / "docker-compose.yml").read_text()
+    assert "services" in compose
+    assert not (tmp_dest / "backend").exists()
+
+
+def test_apply_docker_fastapi_postgres(tmp_dest: Path):
+    _plan(Flags(docker=True, fastapi=True, postgres=True), tmp_dest)
+    assert (tmp_dest / "docker-compose.yml").exists()
+    compose = (tmp_dest / "docker-compose.yml").read_text()
+    assert "postgres:16" in compose
+    assert "myproject_pgdata" in compose
+    assert "backend" in compose
+    assert "8000" in compose
 
 
 def test_apply_full_stack(tmp_dest: Path):
@@ -124,6 +141,10 @@ def test_apply_force_true_restores_corrupted_file(tmp_dest: Path):
         Flags(fastapi=True, postgres=True),
         Flags(fastapi=True, sqlalchemy=True, postgres=True, alembic=True),
         Flags(angular=True),
+        Flags(docker=True),
+        Flags(docker=True, fastapi=True),
+        Flags(docker=True, fastapi=True, postgres=True),
+        Flags(docker=True, fastapi=True, sqlalchemy=True, postgres=True, alembic=True),
     ],
 )
 def test_no_patch_files_remain(flags: Flags, tmp_dest: Path):

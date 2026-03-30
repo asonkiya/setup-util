@@ -19,7 +19,7 @@ def _role_summary(plan: list[Pack]) -> str:
         by_role[p.role] = p.name  # roles should be unique in the plan
 
     # show in a stable order (even if not present)
-    roles = ["base", "backend", "orm", "db", "migrations", "frontend"]
+    roles = ["base", "infra", "backend", "orm", "db", "migrations", "frontend"]
     parts = []
     for r in roles:
         if r in by_role:
@@ -36,6 +36,7 @@ def _selected_flags_list(flags: Flags) -> list[str]:
         ("postgres", flags.postgres),
         ("alembic", flags.alembic),
         ("angular", flags.angular),
+        ("docker", flags.docker),
     ]
     selected = [name for name, enabled in items if enabled]
     return selected or ["(none)"]
@@ -59,6 +60,9 @@ def init(
     angular: bool = typer.Option(
         False, "--angular", help="Add Angular frontend scaffold placeholder."
     ),
+    docker: bool = typer.Option(
+        False, "--docker", help="Add Docker Compose scaffold."
+    ),
     force: bool = typer.Option(
         False, "--force", help="Allow overwrite when applying templates."
     ),
@@ -74,6 +78,7 @@ def init(
         postgres=postgres,
         alembic=alembic,
         angular=angular,
+        docker=docker,
     )
 
     plan = resolve_plan(flags)

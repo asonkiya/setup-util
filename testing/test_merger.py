@@ -14,6 +14,7 @@ from setup_cli.merger import (
     apply_patches,
     merge_env_files,
     merge_toml_files,
+    merge_yaml_files,
 )
 
 
@@ -259,3 +260,59 @@ def test_apply_patches_raises_on_missing_toml_base(tmp_path: Path):
     )
     with pytest.raises(FileNotFoundError):
         apply_patches(tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# merge_yaml_files — docker-compose YAML merge
+# ---------------------------------------------------------------------------
+
+
+def test_merge_yaml_files_merges_services(tmp_path: Path):
+    base = _write(tmp_path / "docker-compose.yml", "services: {}\nvolumes: {}\n")
+    patch = _write(
+        tmp_path / "docker-compose.patch.yml",
+        "services:\n  db:\n    image: postgres:16\n",
+    )
+    merge_yaml_files(base, patch)
+    content = base.read_text()
+    assert "postgres:16" in content
+    assert not patch.exists()
+
+
+def test_merge_yaml_files_deep_merge(tmp_path: Path):
+    base = _write(
+        tmp_path / "docker-compose.yml",
+        "services:\n  db:\n    image: postgres:16\nvolumes: {}\n",
+    )
+    patch = _write(
+        tmp_path / "docker-compose.patch.yml",
+        "services:\n  backend:\n    build: ./backend\n",
+    )
+    merge_yaml_files(base, patch)
+    content = base.read_text()
+    assert "postgres:16" in content
+    assert "backend" in content
+    assert not patch.exists()
+
+
+def test_merge_yaml_files_skips_if_base_missing(tmp_path: Path):
+    patch = _write(
+        tmp_path / "docker-compose.patch.yml",
+        "services:\n  db:\n    image: postgres:16\n",
+    )
+    # should not raise — silently skips and deletes the patch
+    merge_yaml_files(tmp_path / "docker-compose.yml", patch)
+    assert not patch.exists()
+    assert not (tmp_path / "docker-compose.yml").exists()
+
+
+def test_apply_patches_processes_yaml_patches(tmp_path: Path):
+    _write(tmp_path / "docker-compose.yml", "services: {}\nvolumes: {}\n")
+    _write(
+        tmp_path / "docker-compose.patch.yml",
+        "services:\n  db:\n    image: postgres:16\n",
+    )
+    apply_patches(tmp_path)
+    content = (tmp_path / "docker-compose.yml").read_text()
+    assert "postgres:16" in content
+    assert not (tmp_path / "docker-compose.patch.yml").exists()

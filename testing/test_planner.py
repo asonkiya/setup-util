@@ -66,3 +66,22 @@ def test_resolve_plan_alembic_without_sqlalchemy_raises():
 def test_resolve_plan_sqlalchemy_without_fastapi_raises():
     with pytest.raises(ValueError):
         resolve_plan(Flags(sqlalchemy=True))
+
+
+def test_resolve_plan_docker_flag():
+    plan = resolve_plan(Flags(docker=True))
+    names = [p.name for p in plan]
+    assert names == ["base", "docker"]
+
+
+def test_resolve_plan_docker_is_standalone():
+    # should not raise — docker has no requirements
+    resolve_plan(Flags(docker=True))
+
+
+def test_resolve_plan_docker_ordering():
+    plan = resolve_plan(Flags(docker=True, fastapi=True, postgres=True))
+    names = [p.name for p in plan]
+    docker_idx = names.index("docker")
+    fastapi_idx = names.index("backend-fastapi")
+    assert docker_idx < fastapi_idx

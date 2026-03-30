@@ -32,6 +32,7 @@ class Flags:
     postgres: bool = False
     alembic: bool = False
     angular: bool = False
+    docker: bool = False
 
 
 def _templates_root() -> Path:
@@ -82,11 +83,18 @@ def _registry() -> dict[str, Pack]:
             role="frontend",
             provides=frozenset({"frontend"}),
         ),
+        "docker": Pack(
+            name="docker",
+            template_dir=t / "docker",
+            role="infra",
+            provides=frozenset({"docker"}),
+        ),
     }
 
 
 _ROLE_ORDER: list[str] = [
     "base",
+    "infra",
     "backend",
     "orm",
     "db",
@@ -113,6 +121,8 @@ def resolve_plan(flags: Flags) -> list[Pack]:
         selected_names.add("alembic")
     if flags.angular:
         selected_names.add("frontend-angular")
+    if flags.docker:
+        selected_names.add("docker")
 
     packs = [reg[name] for name in selected_names]
     plan = _order_by_role(packs)
