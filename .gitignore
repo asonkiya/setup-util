@@ -17,6 +17,10 @@ build/
 # macOS
 .DS_Store
 
+# Markdown (except READMEs)
+*.md
+!README.md
+!**/README.md
+
 # Claude Code
 .claude/
-CLAUDE.md
